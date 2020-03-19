@@ -263,7 +263,7 @@ function getNavBarHTML($reload = null) {
 			<li><a href="?view=options"><?php echo translate('Options') ?></a></li>
 			<li>
 <?php
-  if ( logToDatabase() > Logger::NOLOG ) { 
+  if ( ZM\logToDatabase() > ZM\Logger::NOLOG ) { 
     if ( ! ZM_RUN_AUDIT ) {
     # zmaudit can clean the logs, but if we aren't running it, then we should clecan them regularly
      dbQuery('DELETE FROM Logs WHERE TimeKey < unix_timestamp( NOW() - interval '.ZM_LOG_DATABASE_LIMIT.') LIMIT 100');
@@ -361,13 +361,14 @@ if ($reload == 'reload') ob_start();
 ?>
 	  <li><?php echo translate('Storage') ?>:
 <?php
-  $storage_areas = Storage::find();
+  $storage_areas = ZM\Storage::find(array('Enabled'=>true));
   $storage_paths = null;
+	$storage_areas_with_no_server_id = array();
   foreach ( $storage_areas as $area ) {
     $storage_paths[$area->Path()] = $area;
-  }
-  if ( ! isset($storage_paths[ZM_DIR_EVENTS]) ) {
-    array_push( $storage_areas, new Storage() );
+		if ( ! $area->ServerId() ) {
+			$storage_areas_with_no_server_id[] = $area;
+		}
   }
   $func = function($S){
     $class = '';
